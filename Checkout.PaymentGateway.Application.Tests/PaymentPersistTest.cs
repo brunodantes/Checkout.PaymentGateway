@@ -34,9 +34,6 @@ public class PaymentPersistTest
             ExpiryYear = 2030
         };
         
-
-
-
         var bankModel = PaymentGatewayService.CreateToBankSimulatorModel(payment);
         var bankResponse = await _bankSimulatorFake.ExecuteBankValidation(bankModel);
 
