@@ -62,7 +62,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
 
         var paymentModel = CreatePaymentModel(paymentRequest, bankResponseModel);
 
-        _logger.LogInformation("Inserting ID : {id} with AuthorizationCode : {AuthorizationCode}",
+        _logger.LogInformation("Inserting ID {id} with authorization code {AuthorizationCode}.",
             paymentModel.Id, paymentModel.AuthorizationCode);
 
         await _paymentRepository.AddPayment(paymentModel);
@@ -89,7 +89,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
 
     private async Task<ValidationResult> ValidateRequest(PaymentRequest paymentRequest)
     {
-        _logger.LogInformation("Starting request validation");
+        _logger.LogInformation("Initializing request validation");
 
         return await _validator.ValidateAsync(paymentRequest);
     }
@@ -117,7 +117,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
 
     public Task<PaymentModel?> GetPaymentDetails(Guid paymentId)
     {
-        _logger.LogInformation("Retrieving payment details from database");
+        _logger.LogInformation("Retrieving payment details from the database");
 
         var result = _paymentRepository.GetPayment(paymentId);
 
