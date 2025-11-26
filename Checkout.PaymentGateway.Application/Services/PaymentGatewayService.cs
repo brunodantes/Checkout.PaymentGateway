@@ -40,17 +40,17 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
         }
         catch (ValidationException validationEx)
         {
-            _logger.LogWarning("An error occurred during validation process. Message: {validationExMessage}", validationEx.Message);
+            _logger.LogWarning("An error occurred during the validation process. Message: {validationExMessage}", validationEx.Message);
             throw;
         }
         catch(ApiException apiEx)
         {
-            _logger.LogError(apiEx, "An unexpected error occured in banking validation : {rawMessage}", apiEx.Content);
+            _logger.LogError(apiEx, "An unexpected error occurred during the banking validation : {rawMessage}", apiEx.Content);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unexpected error occured during in add payment process");
+            _logger.LogError(ex, "An unexpected error occurred during the payment creation process");
             throw;
         }
         
@@ -58,7 +58,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
 
     public async Task<PaymentModel> InsertPaymentToDatabase(PaymentRequest paymentRequest, BankResponseModel bankResponseModel)
     {
-        _logger.LogInformation("Adding payment request to database");
+        _logger.LogInformation("Adding payment request to the database");
 
         var paymentModel = CreatePaymentModel(paymentRequest, bankResponseModel);
 
@@ -96,7 +96,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
 
     private async Task<BankResponseModel> ExecuteBankSimulator(BankRequestModel bankRequestModel)
     {
-        _logger.LogInformation("Execute and return bank simulation");
+        _logger.LogInformation("Execute bank simulation and return result");
 
         var result = await _bankSimulatorClient.ExecuteBankValidation(bankRequestModel);
 

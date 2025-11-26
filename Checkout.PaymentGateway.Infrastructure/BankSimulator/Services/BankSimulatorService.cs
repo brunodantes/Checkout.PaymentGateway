@@ -35,7 +35,7 @@ public class BankSimulatorService : IBankSimulatorService
 
     public async Task<BankResponseModel> ExecuteBankValidation(BankRequestModel bankRequestModel)
     {
-        _logger.LogInformation("Initializing banking validation rest process");
+        _logger.LogInformation("Initializing banking validation REST process");
 
         var context = new Context();
 
