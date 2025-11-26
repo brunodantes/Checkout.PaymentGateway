@@ -1,0 +1,126 @@
+﻿using Checkout.PaymentGateway.Contract.Enum;
+using Checkout.PaymentGateway.Contract.Requests;
+using Checkout.PaymentGateway.Domain.Repositories;
+using Checkout.PaymentGateway.Domain.Services;
+using Checkout.PaymentGateway.Entities.Models;
+using Checkout.PaymentGateway.Infrastructure.BankSimulator.Domain;
+using Checkout.PaymentGateway.Infrastructure.BankSimulator.Models;
+using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.Extensions.Logging;
+using Refit;
+
+namespace Checkout.PaymentGateway.Application.Services;
+public class PaymentGatewayService(IPaymentRepository paymentRepository, 
+    IValidator<PaymentRequest> validator,
+    IBankSimulatorService bankSimulatorClient,
+    ILogger<PaymentGatewayService> logger) : IPaymentGatewayService
+{
+    private readonly IPaymentRepository _paymentRepository = paymentRepository;
+    private readonly IValidator<PaymentRequest> _validator = validator;
+    private readonly IBankSimulatorService _bankSimulatorClient = bankSimulatorClient;
+    private readonly ILogger<PaymentGatewayService> _logger = logger;
+
+    public async Task<PaymentModel> AddPayment(PaymentRequest paymentRequest)
+    {
+        try
+        {
+            var validationResult = await ValidateRequest(paymentRequest);
+
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join(",", validationResult.Errors));
+
+            var bankModel = CreateToBankSimulatorModel(paymentRequest);
+
+            var bankSimulatorResponse = await ExecuteBankSimulator(bankModel);
+
+            var response = await InsertPaymentToDatabase(paymentRequest, bankSimulatorResponse);
+
+            return response;
+        }
+        catch (ValidationException validationEx)
+        {
+            _logger.LogWarning("An error occurred during validation process. Message: {validationExMessage}", validationEx.Message);
+            throw;
+        }
+        catch(ApiException apiEx)
+        {
+            _logger.LogError(apiEx, "An unexpected error occured in banking validation : {rawMessage}", apiEx.Content);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occured during in add payment process");
+            throw;
+        }
+        
+    }
+
+    public async Task<PaymentModel> InsertPaymentToDatabase(PaymentRequest paymentRequest, BankResponseModel bankResponseModel)
+    {
+        _logger.LogInformation("Adding payment request to database");
+
+        var paymentModel = CreatePaymentModel(paymentRequest, bankResponseModel);
+
+        _logger.LogInformation("Inserting ID : {id} with AuthorizationCode : {AuthorizationCode}",
+            paymentModel.Id, paymentModel.AuthorizationCode);
+
+        await _paymentRepository.AddPayment(paymentModel);
+
+        return paymentModel;
+    }
+
+    private static PaymentModel CreatePaymentModel(PaymentRequest paymentRequest, BankResponseModel bankResponseModel)
+    {
+        var authorizationCode = string.IsNullOrEmpty(bankResponseModel.AuthorizationCode) ? Guid.Empty : new Guid(bankResponseModel.AuthorizationCode);
+
+        return new PaymentModel()
+        {
+            PaymentStatusEnum = bankResponseModel.Authorized ? PaymentStatusEnum.Authorized : PaymentStatusEnum.Declined,
+            Id = Guid.NewGuid(),
+            AuthorizationCode = authorizationCode,
+            Amount = paymentRequest.Amount,
+            CardNumber = paymentRequest.CardNumber,
+            Currency = paymentRequest.Currency,
+            ExpiryMonth = paymentRequest.ExpiryMonth,
+            ExpiryYear = paymentRequest.ExpiryYear
+        };
+    }
+
+    private async Task<ValidationResult> ValidateRequest(PaymentRequest paymentRequest)
+    {
+        _logger.LogInformation("Starting request validation");
+
+        return await _validator.ValidateAsync(paymentRequest);
+    }
+
+    private async Task<BankResponseModel> ExecuteBankSimulator(BankRequestModel bankRequestModel)
+    {
+        _logger.LogInformation("Execute and return bank simulation");
+
+        var result = await _bankSimulatorClient.ExecuteBankValidation(bankRequestModel);
+
+        return result;
+    }
+
+    public static BankRequestModel CreateToBankSimulatorModel(PaymentRequest paymentRequest)
+    {
+        return new BankRequestModel()
+        {
+            Amount = paymentRequest.Amount,
+            CardNumber = paymentRequest.CardNumber,
+            Currency = paymentRequest.Currency,
+            CVV = paymentRequest.CVV,
+            ExpiryDate = paymentRequest.ExpiryDate,
+        };
+    }
+
+    public Task<PaymentModel?> GetPaymentDetails(Guid paymentId)
+    {
+        _logger.LogInformation("Retrieving payment details from database");
+
+        var result = _paymentRepository.GetPayment(paymentId);
+
+        return result;
+    }
+}
