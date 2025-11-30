@@ -23,7 +23,6 @@ public static class DependencyInjection
     internal static void AddRepositories(this IServiceCollection services)
     {
         services.AddSingleton<IPaymentRepository, PaymentRepository>();
-
     }
 
     internal static void AddInfraestructure(this IServiceCollection services)

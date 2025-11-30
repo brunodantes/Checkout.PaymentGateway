@@ -3,6 +3,7 @@ using Checkout.PaymentGateway.Domain.Services;
 using Checkout.PaymentGateway.Entities.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace Checkout.PaymentGateway.API.Controllers;
 
@@ -13,7 +14,7 @@ public class PaymentGatewayController(IPaymentGatewayService paymentGatewayServi
     private readonly IPaymentGatewayService _paymentGatewayService = paymentGatewayService;
 
     [HttpGet]
-    [ProducesResponseType<PaymentModel>(200)]
+    [ProducesResponseType<PaymentModel>((int)HttpStatusCode.OK)]
     public async Task<IActionResult> GetPaymentDetail([FromQuery][Required] Guid paymentId)
     {
         var result = await _paymentGatewayService.GetPaymentDetails(paymentId);
@@ -22,7 +23,7 @@ public class PaymentGatewayController(IPaymentGatewayService paymentGatewayServi
     }
 
     [HttpPost]
-    [ProducesResponseType<PaymentModel>(200)]
+    [ProducesResponseType<PaymentModel>((int)HttpStatusCode.OK)]
     public async Task<IActionResult> PublishPaymentRequest([FromBody][Required] PaymentRequest paymentRequest)
     {
         var result = await _paymentGatewayService.AddPayment(paymentRequest);

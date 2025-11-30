@@ -1,4 +1,5 @@
-﻿using Checkout.PaymentGateway.Contract.Enum;
+﻿using Checkout.PaymentGateway.Common.ExceptionHandler;
+using Checkout.PaymentGateway.Contract.Enum;
 using Checkout.PaymentGateway.Contract.Requests;
 using Checkout.PaymentGateway.Domain.Repositories;
 using Checkout.PaymentGateway.Domain.Services;
@@ -115,11 +116,12 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
         };
     }
 
-    public Task<PaymentModel?> GetPaymentDetails(Guid paymentId)
+    public async Task<PaymentModel> GetPaymentDetails(Guid paymentId)
     {
         _logger.LogInformation("Retrieving payment details from the database");
 
-        var result = _paymentRepository.GetPayment(paymentId);
+        var result = await _paymentRepository.GetPayment(paymentId) 
+            ?? throw new NotFoundException("PAYMENT", paymentId.ToString()); ;
 
         return result;
     }
