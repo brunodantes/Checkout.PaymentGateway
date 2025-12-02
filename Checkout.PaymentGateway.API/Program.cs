@@ -1,3 +1,4 @@
+using Checkout.PaymentGateway.API.Middlewares;
 using Checkout.PaymentGateway.API.ServiceExtensions;
 using Serilog;
 using System.Text.Json.Serialization;
@@ -21,6 +22,8 @@ builder.Services.AddInfraestructure();
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

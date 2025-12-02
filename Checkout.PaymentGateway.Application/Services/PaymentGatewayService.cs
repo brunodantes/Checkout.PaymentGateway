@@ -29,7 +29,7 @@ public class PaymentGatewayService(IPaymentRepository paymentRepository,
             var validationResult = await ValidateRequest(paymentRequest);
 
             if (!validationResult.IsValid)
-                throw new ValidationException(string.Join(",", validationResult.Errors));
+                throw new ValidationException(validationResult.Errors);
 
             var bankModel = CreateToBankSimulatorModel(paymentRequest);
 

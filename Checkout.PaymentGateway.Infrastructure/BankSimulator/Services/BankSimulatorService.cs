@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
-using Refit;
 using System.Net;
 using Checkout.PaymentGateway.Infrastructure.BankSimulator.Domain;
 using Checkout.PaymentGateway.Infrastructure.BankSimulator.Models;
 using Checkout.PaymentGateway.Infrastructure.BankSimulator.Rest;
-using System.Text.Json;
 
 namespace Checkout.PaymentGateway.Infrastructure.BankSimulator.Services;
 public class BankSimulatorService : IBankSimulatorService
